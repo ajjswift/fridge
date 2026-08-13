@@ -15,7 +15,7 @@ export default async function PeoplePage() {
         backHref="/settings"
         compact
       />
-      <PeopleScreen users={getUsers()} currentUserId={me.id} />
+      <PeopleScreen users={await getUsers()} currentUserId={me.id} />
     </div>
   );
 }

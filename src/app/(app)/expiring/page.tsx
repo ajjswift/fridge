@@ -20,8 +20,7 @@ export default async function ExpiringPage({ searchParams }: PageProps<"/expirin
   const windowDays = WINDOWS.some((w) => w.days === requested) ? requested : 7;
 
   const today = todayISO();
-  const soonDays = getSoonDays();
-  const lines = getExpiringLines(windowDays);
+  const [soonDays, lines] = await Promise.all([getSoonDays(), getExpiringLines(windowDays)]);
 
   const past = lines.filter((l) => daysUntil(l.expiry_date, today) < 0);
   // Split by what the date actually means: a passed use-by is a safety call,

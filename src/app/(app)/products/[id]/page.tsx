@@ -15,15 +15,15 @@ export default async function ProductPage({ params }: PageProps<"/products/[id]"
   const productId = Number(id);
   if (!Number.isInteger(productId)) notFound();
 
-  const product = getProduct(productId);
+  const product = await getProduct(productId);
   if (!product) notFound();
 
   return (
     <ProductScreen
       product={product}
-      entries={getEntriesForProduct(productId)}
-      locations={getLocations()}
-      soonDays={getSoonDays()}
+      entries={await getEntriesForProduct(productId)}
+      locations={await getLocations()}
+      soonDays={await getSoonDays()}
       today={todayISO()}
     />
   );

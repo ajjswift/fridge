@@ -5,7 +5,7 @@ import { getLocationSummaries } from "@/lib/queries";
 export const dynamic = "force-dynamic";
 
 /** Same screen as /settings/locations, with the "new place" sheet already open. */
-export default function NewLocationPage() {
+export default async function NewLocationPage() {
   return (
     <div className="pb-6">
       <PageHeader
@@ -14,7 +14,7 @@ export default function NewLocationPage() {
         backHref="/locations"
         compact
       />
-      <LocationManager locations={getLocationSummaries()} autoOpenNew />
+      <LocationManager locations={await getLocationSummaries()} autoOpenNew />
     </div>
   );
 }

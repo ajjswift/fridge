@@ -31,13 +31,13 @@ function greeting(hour: number) {
   return "Good evening";
 }
 
-export default function HomePage() {
+export default async function HomePage() {
   const today = todayISO();
-  const soonDays = getSoonDays();
-  const totals = getKitchenTotals();
-  const locations = getLocationSummaries();
-  const expiring = getExpiringLines(soonDays);
-  const householdName = getSetting("household_name", "Our kitchen");
+  const soonDays = await getSoonDays();
+  const [totals, locations, expiring, householdName] = await Promise.all([
+    getKitchenTotals(), getLocationSummaries(), getExpiringLines(soonDays),
+    getSetting("household_name", "Our kitchen"),
+  ]);
 
   const urgent = expiring.slice(0, 4);
   const empty = totals.units === 0;

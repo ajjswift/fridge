@@ -14,7 +14,7 @@ function first(value: string | string[] | undefined): string | undefined {
 
 export default async function AddPage({ searchParams }: PageProps<"/add">) {
   const params = await searchParams;
-  const locations = getLocations();
+  const locations = await getLocations();
   const today = todayISO();
 
   // The scanner may hand over a whole GS1 element string rather than a plain
@@ -28,8 +28,8 @@ export default async function AddPage({ searchParams }: PageProps<"/add">) {
   const requestedLocation = Number(first(params.location));
 
   let product =
-    Number.isInteger(productId) && productId > 0 ? getProduct(productId) : undefined;
-  if (!product && barcode) product = getProductByBarcode(barcode);
+    Number.isInteger(productId) && productId > 0 ? await getProduct(productId) : undefined;
+  if (!product && barcode) product = await getProductByBarcode(barcode);
 
   // Only reach out to the internet for a code we've never seen.
   const lookup = !product && barcode ? await lookupBarcode(barcode) : null;

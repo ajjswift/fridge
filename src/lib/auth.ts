@@ -2,7 +2,7 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { db } from "./db";
+import { getDb } from "./db";
 
 export const SESSION_COOKIE = "recime_session";
 const SESSION_DAYS = 60;
@@ -24,23 +24,25 @@ function expiryTimestamp(days: number): string {
     .slice(0, 19);
 }
 
-export function createSession(userId: number, userAgent?: string | null): {
+export async function createSession(userId: number, userAgent?: string | null): Promise<{
   token: string;
   maxAge: number;
-} {
+}> {
   const token = randomBytes(32).toString("base64url");
-  db.prepare(
+  const db = await getDb();
+  await db.run(
     "INSERT INTO sessions (token, user_id, user_agent, expires_at) VALUES (?, ?, ?, ?)",
-  ).run(token, userId, userAgent?.slice(0, 200) ?? null, expiryTimestamp(SESSION_DAYS));
+    token, userId, userAgent?.slice(0, 200) ?? null, expiryTimestamp(SESSION_DAYS),
+  );
   return { token, maxAge: SESSION_DAYS * 86_400 };
 }
 
-export function destroySession(token: string) {
-  db.prepare("DELETE FROM sessions WHERE token = ?").run(token);
+export async function destroySession(token: string) {
+  await (await getDb()).run("DELETE FROM sessions WHERE token = ?", token);
 }
 
-export function destroyAllSessionsFor(userId: number) {
-  db.prepare("DELETE FROM sessions WHERE user_id = ?").run(userId);
+export async function destroyAllSessionsFor(userId: number) {
+  await (await getDb()).run("DELETE FROM sessions WHERE user_id = ?", userId);
 }
 
 /** The signed-in user, or null. Never throws — safe to call anywhere. */
@@ -48,14 +50,14 @@ export async function currentUser(): Promise<SessionUser | null> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
 
-  const row = db
-    .prepare(
+  const db = await getDb();
+  const row = await db.get<User>(
       `SELECT u.id, u.username, u.display_name, u.created_by, u.created_at
          FROM sessions s
          JOIN users u ON u.id = s.user_id
-        WHERE s.token = ? AND s.expires_at > datetime('now')`,
-    )
-    .get(token) as User | undefined;
+        WHERE s.token = ? AND s.expires_at > ${db.nowExpr}`,
+    token,
+  );
 
   return row ? { ...row, sessionToken: token } : null;
 }
@@ -67,18 +69,18 @@ export async function requireUser(returnTo?: string): Promise<SessionUser> {
   redirect(returnTo ? `/login?next=${encodeURIComponent(returnTo)}` : "/login");
 }
 
-export function getUsers(): Array<User & { session_count: number }> {
-  return db
-    .prepare(
+export async function getUsers(): Promise<Array<User & { session_count: number }>> {
+  const db = await getDb();
+  return db.all<User & { session_count: number }>(
       `SELECT u.id, u.username, u.display_name, u.created_by, u.created_at,
               (SELECT COUNT(*) FROM sessions s
-                WHERE s.user_id = u.id AND s.expires_at > datetime('now')) AS session_count
+                WHERE s.user_id = u.id AND s.expires_at > ${db.nowExpr}) AS session_count
          FROM users u
         ORDER BY u.id`,
-    )
-    .all() as Array<User & { session_count: number }>;
+  );
 }
 
-export function countUsers(): number {
-  return (db.prepare("SELECT COUNT(*) AS n FROM users").get() as { n: number }).n;
+export async function countUsers(): Promise<number> {
+  const row = await (await getDb()).get<{ n: number }>("SELECT COUNT(*) AS n FROM users");
+  return row?.n ?? 0;
 }

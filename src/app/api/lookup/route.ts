@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * The scanner calls this the instant a barcode is read. Something you've bought
- * before resolves instantly from SQLite; anything new falls through to Open
+ * before resolves instantly from the kitchen database; anything new falls through to Open
  * Food Facts.
  */
 export async function GET(request: Request) {
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
     ? { iso: scanned.iso, precision: scanned.precision, type: scanned.type }
     : null;
 
-  const known = getProductByBarcode(barcode);
+  const known = await getProductByBarcode(barcode);
   if (known) {
     return NextResponse.json({
       source: "known" as const,

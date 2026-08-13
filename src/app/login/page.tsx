@@ -21,7 +21,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
             🥗
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            {getSetting("household_name", "Our kitchen")}
+            {await getSetting("household_name", "Our kitchen")}
           </h1>
           <p className="mt-1 text-muted-foreground">Sign in to see what&apos;s in.</p>
         </div>

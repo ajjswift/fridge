@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default function LocationsPage() {
-  const locations = getLocationSummaries();
+export default async function LocationsPage() {
+  const locations = await getLocationSummaries();
 
   return (
     <div className="pb-6">

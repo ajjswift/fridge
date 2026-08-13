@@ -4,9 +4,8 @@ import { getLowStock, getShoppingItems } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
-export default function ShoppingPage() {
-  const items = getShoppingItems();
-  const low = getLowStock();
+export default async function ShoppingPage() {
+  const [items, low] = await Promise.all([getShoppingItems(), getLowStock()]);
   const outstanding = items.filter((i) => !i.checked).length;
 
   return (

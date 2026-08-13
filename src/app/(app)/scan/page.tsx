@@ -10,7 +10,7 @@ function first(value: string | string[] | undefined): string | undefined {
 
 export default async function ScanPage({ searchParams }: PageProps<"/scan">) {
   const params = await searchParams;
-  const locations = getLocations();
+  const locations = await getLocations();
   const requested = Number(first(params.location));
   const initialLocationId =
     locations.find((l) => l.id === requested)?.id ?? locations[0]?.id ?? null;

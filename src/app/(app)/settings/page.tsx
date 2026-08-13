@@ -13,8 +13,10 @@ export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const me = await requireUser("/settings");
-  const locations = getLocations();
-  const people = getUsers();
+  const [locations, people, householdName, soonDays, vapidPublicKey, notifyEnabled, notifyTime, householdDevices] = await Promise.all([
+    getLocations(), getUsers(), getSetting("household_name", "Our kitchen"), getSoonDays(),
+    getVapidPublicKey(), getSetting("notify_enabled", "1"), getSetting("notify_time", "08:30"), countSubscriptions(),
+  ]);
 
   return (
     <div className="pb-6">
@@ -22,15 +24,15 @@ export default async function SettingsPage() {
 
       <div className="space-y-6 px-4">
         <SettingsScreen
-          householdName={getSetting("household_name", "Our kitchen")}
-          soonDays={getSoonDays()}
+          householdName={householdName}
+          soonDays={soonDays}
         />
 
         <NotificationSettings
-          vapidPublicKey={getVapidPublicKey()}
-          notifyEnabled={getSetting("notify_enabled", "1") === "1"}
-          notifyTime={getSetting("notify_time", "08:30")}
-          householdDevices={countSubscriptions()}
+          vapidPublicKey={vapidPublicKey}
+          notifyEnabled={notifyEnabled === "1"}
+          notifyTime={notifyTime}
+          householdDevices={householdDevices}
         />
 
         <section>
@@ -62,8 +64,8 @@ export default async function SettingsPage() {
         <SettingsDangerZone />
 
         <p className="px-1 pb-2 text-center text-xs text-muted-foreground">
-          Everything lives in one SQLite file on this machine — nothing is sent
-          anywhere except barcode lookups.
+          Your kitchen stays private — nothing is sent anywhere except barcode
+          lookups.
         </p>
       </div>
     </div>

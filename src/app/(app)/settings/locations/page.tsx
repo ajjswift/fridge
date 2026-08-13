@@ -4,7 +4,7 @@ import { getLocationSummaries } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
-export default function ManageLocationsPage() {
+export default async function ManageLocationsPage() {
   return (
     <div className="pb-6">
       <PageHeader
@@ -13,7 +13,7 @@ export default function ManageLocationsPage() {
         backHref="/settings"
         compact
       />
-      <LocationManager locations={getLocationSummaries()} />
+      <LocationManager locations={await getLocationSummaries()} />
     </div>
   );
 }

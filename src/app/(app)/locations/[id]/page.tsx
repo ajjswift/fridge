@@ -14,11 +14,10 @@ export default async function LocationPage({ params }: PageProps<"/locations/[id
   const locationId = Number(id);
   if (!Number.isInteger(locationId)) notFound();
 
-  const location = getLocation(locationId);
+  const location = await getLocation(locationId);
   if (!location) notFound();
 
-  const lines = getStockLinesByLocation(locationId);
-  const soonDays = getSoonDays();
+  const [lines, soonDays] = await Promise.all([getStockLinesByLocation(locationId), getSoonDays()]);
   const today = todayISO();
 
   return (

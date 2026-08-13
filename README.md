@@ -4,7 +4,8 @@ A friendlier take on [grocy](https://grocy.info)'s stock tracking, built for one
 household and one job: knowing what's in the kitchen, what needs eating, and
 getting the shopping put away fast.
 
-Everything lives in a single SQLite file. No accounts, no cloud, no sync.
+By default everything lives in a single SQLite file. Set `DATABASE_URL` to use
+PostgreSQL instead. No hosted service or sync layer is required.
 
 ## Signing in
 
@@ -111,8 +112,9 @@ npm run start:phone
 
 ### Backing up
 
-Copy `data/recime.db` somewhere safe. That single file is the whole kitchen.
-Deleting it resets the app to a fresh, empty state with the default places.
+With the default SQLite setup, copy `data/recime.db` somewhere safe. Deleting
+it resets the app to a fresh, empty state with the default places. Back up a
+PostgreSQL deployment using your provider's or PostgreSQL's normal tools.
 
 To try the app with realistic contents, use **Settings → Add example groceries**.
 
@@ -121,13 +123,13 @@ To try the app with realistic contents, use **Settings → Add example groceries
 | Layer | Choice |
 | --- | --- |
 | Framework | Next.js 16 (App Router, React Server Components) |
-| Database | SQLite via `better-sqlite3` — synchronous, no pool, no ORM |
+| Database | SQLite via `better-sqlite3`, or PostgreSQL via `pg` when `DATABASE_URL` is set |
 | Writes | Server Actions in `src/lib/actions.ts`, validated with Zod |
 | Reads | Plain SQL in `src/lib/queries.ts`, server-only |
 | UI | Tailwind v4 + shadcn/ui, mobile-first |
 | Barcodes | Native `BarcodeDetector`, falling back to ZXing on iOS Safari |
 | Lookups | Open Food Facts, cached for 30 days, proxied via `/api/lookup` |
-| Accounts | Cookie sessions in SQLite, scrypt password hashes (`node:crypto`) |
+| Accounts | Cookie sessions in the selected database, scrypt password hashes (`node:crypto`) |
 | Reminders | Web Push (VAPID) via `web-push`, service worker in `public/sw.js` |
 
 ### Data model
@@ -142,7 +144,7 @@ To try the app with realistic contents, use **Settings → Add example groceries
 - `users`, `sessions` — accounts and signed-in devices.
 - `push_subscriptions` — one row per browser that wants reminders.
 
-Pages read SQLite directly at request time and every write calls
+Pages read the configured database at request time and every write calls
 `revalidatePath("/", "layout")`. For a single household on one machine that is
 both correct and fast enough; there is no cache to reason about.
 
@@ -167,6 +169,7 @@ layout.
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `RECIME_DB_PATH` | `./data/recime.db` | Where the database file lives |
+| `DATABASE_URL` | unset | PostgreSQL connection string; when set, takes precedence over SQLite |
 | `RECIME_SEED_USERNAME` | `alex` | First account's username (first run only) |
 | `RECIME_SEED_PASSWORD` | see above | First account's password (first run only) |
 | `RECIME_PUSH_CONTACT` | `mailto:nobody@example.com` | Contact address sent to push services |

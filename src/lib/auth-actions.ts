@@ -3,7 +3,7 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { db } from "./db";
+import { getDb } from "./db";
 import {
   SESSION_COOKIE,
   countUsers,
@@ -33,16 +33,18 @@ export async function signIn(input: {
     return { ok: false, error: "Type your username and password." };
   }
 
-  const row = db
-    .prepare("SELECT id, password_hash FROM users WHERE username = ?")
-    .get(username) as { id: number; password_hash: string } | undefined;
+  const db = await getDb();
+  const row = await db.get<{ id: number; password_hash: string }>(
+    "SELECT id, password_hash FROM users WHERE LOWER(username) = LOWER(?)",
+    username,
+  );
 
   if (!row || !verifyPassword(input.password, row.password_hash)) {
     return { ok: false, error: BAD_CREDENTIALS };
   }
 
   const userAgent = (await headers()).get("user-agent");
-  const { token, maxAge } = createSession(row.id, userAgent);
+  const { token, maxAge } = await createSession(row.id, userAgent);
 
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
@@ -64,7 +66,7 @@ export async function signIn(input: {
 
 export async function signOut(): Promise<void> {
   const user = await currentUser();
-  if (user) destroySession(user.sessionToken);
+  if (user) await destroySession(user.sessionToken);
   (await cookies()).delete(SESSION_COOKIE);
   revalidatePath("/", "layout");
   redirect("/login");
@@ -84,14 +86,14 @@ export async function createUser(input: {
   const pwProblem = passwordProblem(input.password);
   if (pwProblem) return { ok: false, error: pwProblem };
 
-  const taken = db
-    .prepare("SELECT id FROM users WHERE username = ?")
-    .get(username);
+  const db = await getDb();
+  const taken = await db.get("SELECT id FROM users WHERE LOWER(username) = LOWER(?)", username);
   if (taken) return { ok: false, error: `Someone already uses "${username}".` };
 
-  db.prepare(
+  await db.run(
     "INSERT INTO users (username, password_hash, created_by) VALUES (?, ?, ?)",
-  ).run(username, hashPassword(input.password), actor.id);
+    username, hashPassword(input.password), actor.id,
+  );
 
   revalidatePath("/", "layout");
   return { ok: true, data: { username } };
@@ -104,9 +106,10 @@ export async function changeOwnPassword(input: {
   const actor = await currentUser();
   if (!actor) return { ok: false, error: "Sign in again to change your password." };
 
-  const row = db
-    .prepare("SELECT password_hash FROM users WHERE id = ?")
-    .get(actor.id) as { password_hash: string } | undefined;
+  const db = await getDb();
+  const row = await db.get<{ password_hash: string }>(
+    "SELECT password_hash FROM users WHERE id = ?", actor.id,
+  );
   if (!row || !verifyPassword(input.currentPassword, row.password_hash)) {
     return { ok: false, error: "Your current password isn't right." };
   }
@@ -114,14 +117,14 @@ export async function changeOwnPassword(input: {
   const problem = passwordProblem(input.newPassword);
   if (problem) return { ok: false, error: problem };
 
-  db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(
+  await db.run("UPDATE users SET password_hash = ? WHERE id = ?",
     hashPassword(input.newPassword),
     actor.id,
   );
 
   // Anything signed in elsewhere with the old password gets kicked out, except
   // the device doing the changing.
-  db.prepare("DELETE FROM sessions WHERE user_id = ? AND token != ?").run(
+  await db.run("DELETE FROM sessions WHERE user_id = ? AND token != ?",
     actor.id,
     actor.sessionToken,
   );
@@ -143,16 +146,15 @@ export async function resetOtherPassword(input: {
   const problem = passwordProblem(input.newPassword);
   if (problem) return { ok: false, error: problem };
 
-  const target = db
-    .prepare("SELECT id FROM users WHERE id = ?")
-    .get(input.userId) as { id: number } | undefined;
+  const db = await getDb();
+  const target = await db.get<{ id: number }>("SELECT id FROM users WHERE id = ?", input.userId);
   if (!target) return { ok: false, error: "That person no longer has an account." };
 
-  db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(
+  await db.run("UPDATE users SET password_hash = ? WHERE id = ?",
     hashPassword(input.newPassword),
     input.userId,
   );
-  destroyAllSessionsFor(input.userId);
+  await destroyAllSessionsFor(input.userId);
 
   revalidatePath("/", "layout");
   return { ok: true, data: undefined };
@@ -164,11 +166,11 @@ export async function deleteUser(userId: number): Promise<ActionResult> {
   if (actor.id === userId) {
     return { ok: false, error: "You can't remove your own account." };
   }
-  if (countUsers() <= 1) {
+  if ((await countUsers()) <= 1) {
     return { ok: false, error: "There has to be at least one account." };
   }
 
-  db.prepare("DELETE FROM users WHERE id = ?").run(userId);
+  await (await getDb()).run("DELETE FROM users WHERE id = ?", userId);
   revalidatePath("/", "layout");
   return { ok: true, data: undefined };
 }

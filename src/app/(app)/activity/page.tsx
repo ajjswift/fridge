@@ -22,8 +22,8 @@ const KINDS = {
   open: { icon: DoorOpen, verb: "Opened", tone: "text-foreground bg-secondary" },
 };
 
-export default function ActivityPage() {
-  const activity = getActivity(60);
+export default async function ActivityPage() {
+  const activity = await getActivity(60);
 
   return (
     <div className="pb-6">

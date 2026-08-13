@@ -16,9 +16,9 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
   const raw = Array.isArray(params.q) ? params.q[0] : params.q;
   const query = (raw ?? "").trim();
 
-  const results = query.length >= 1 ? searchStockLines(query) : [];
+  const results = query.length >= 1 ? await searchStockLines(query) : [];
   const today = todayISO();
-  const soonDays = getSoonDays();
+  const soonDays = await getSoonDays();
 
   return (
     <div className="pb-6">

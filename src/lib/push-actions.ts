@@ -16,14 +16,14 @@ export async function sendTestNotification(): Promise<
   const user = await currentUser();
   if (!user) return { ok: false, error: "Sign in again first." };
 
-  if (countSubscriptions(user.id) === 0) {
+  if ((await countSubscriptions(user.id)) === 0) {
     return {
       ok: false,
       error: "Turn reminders on for this device first.",
     };
   }
 
-  const digest = buildExpiryDigest();
+  const digest = await buildExpiryDigest();
   const result = await sendPush(
     digest ?? {
       title: "🥗 Recime reminders are on",
@@ -65,20 +65,19 @@ export async function setNotificationPrefs(input: {
   const user = await currentUser();
   if (!user) return { ok: false, error: "Sign in again first." };
 
-  const { db } = await import("./db");
-  const upsert = db.prepare(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-  );
+  const { getDb } = await import("./db");
+  const db = await getDb();
 
   if (input.enabled !== undefined) {
-    upsert.run("notify_enabled", input.enabled ? "1" : "0");
+    await db.run(`INSERT INTO settings (key, value) VALUES (?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value`, "notify_enabled", input.enabled ? "1" : "0");
   }
   if (input.time !== undefined) {
     if (!/^\d{2}:\d{2}$/.test(input.time)) {
       return { ok: false, error: "That isn't a valid time." };
     }
-    upsert.run("notify_time", input.time);
+    await db.run(`INSERT INTO settings (key, value) VALUES (?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value`, "notify_time", input.time);
   }
 
   revalidatePath("/", "layout");

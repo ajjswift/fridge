@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { currentUser } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
   // An endpoint is unique to a browser install; re-subscribing on the same
   // device should move it to the current user rather than duplicate it.
-  db.prepare(
+  await (await getDb()).run(
     `INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, label)
      VALUES (?, ?, ?, ?, ?)
      ON CONFLICT(endpoint) DO UPDATE SET
@@ -35,7 +35,8 @@ export async function POST(request: Request) {
        p256dh  = excluded.p256dh,
        auth    = excluded.auth,
        label   = excluded.label`,
-  ).run(user.id, endpoint, keys.p256dh, keys.auth, label ?? null);
+    user.id, endpoint, keys.p256dh, keys.auth, label ?? null,
+  );
 
   return NextResponse.json({ ok: true });
 }
@@ -49,7 +50,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
 
-  db.prepare("DELETE FROM push_subscriptions WHERE endpoint = ? AND user_id = ?").run(
+  await (await getDb()).run("DELETE FROM push_subscriptions WHERE endpoint = ? AND user_id = ?",
     body.endpoint,
     user.id,
   );
