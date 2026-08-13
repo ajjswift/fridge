@@ -1,4 +1,5 @@
 import { BottomNav } from "@/components/bottom-nav";
+import { DesktopNav } from "@/components/desktop-nav";
 import { PushRegistrar } from "@/components/push-registrar";
 import { requireUser } from "@/lib/auth";
 
@@ -10,10 +11,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   await requireUser();
 
   return (
-    // Centred column so the phone layout stays honest on a desktop screen.
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-background shadow-[0_0_80px_-30px_rgba(0,0,0,0.25)]">
-      <main className="flex-1 pb-[calc(5.75rem+env(safe-area-inset-bottom))]">
-        {children}
+    <div className="min-h-dvh bg-background md:grid md:grid-cols-[16.5rem_minmax(0,1fr)] lg:grid-cols-[18rem_minmax(0,1fr)]">
+      <DesktopNav />
+      <main className="min-w-0 pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0">
+        <div className="mx-auto min-h-dvh w-full max-w-[100rem]">{children}</div>
       </main>
       <BottomNav />
       <PushRegistrar />

@@ -23,6 +23,8 @@ export function DataButtons() {
   const [pending, startTransition] = useTransition();
   const [confirming, setConfirming] = useState(false);
 
+  if (process.env.NODE_ENV !== "development") return null;
+
   return (
     <div className="flex flex-col gap-2">
       <Button

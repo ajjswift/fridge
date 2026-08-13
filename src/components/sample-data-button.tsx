@@ -17,6 +17,8 @@ export function SampleDataButton({
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
+  if (process.env.NODE_ENV !== "development") return null;
+
   return (
     <Button
       variant={variant}

@@ -35,7 +35,7 @@ export function BottomNav() {
   if (pathname.startsWith("/scan")) return null;
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md border-t border-border/70 bg-background/85 backdrop-blur-xl">
+    <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md border-t border-border/70 bg-background/85 backdrop-blur-xl md:hidden">
       <div className="grid h-[4.25rem] grid-cols-5 items-center px-1">
         {TABS.map((tab) => {
           if (!tab) return <ScanButton key="scan" />;

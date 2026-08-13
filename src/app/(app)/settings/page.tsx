@@ -11,6 +11,8 @@ import { getLocations, getSetting, getSoonDays } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
+const SHOW_EXAMPLE_DATA = process.env.NODE_ENV === "development";
+
 export default async function SettingsPage() {
   const me = await requireUser("/settings");
   const [locations, people, householdName, soonDays, vapidPublicKey, notifyEnabled, notifyTime, householdDevices] = await Promise.all([
@@ -61,7 +63,7 @@ export default async function SettingsPage() {
           </Card>
         </section>
 
-        <SettingsDangerZone />
+        {SHOW_EXAMPLE_DATA && <SettingsExampleData />}
 
         <p className="px-1 pb-2 text-center text-xs text-muted-foreground">
           Your kitchen stays private — nothing is sent anywhere except barcode
@@ -112,7 +114,7 @@ function NavRow({
   );
 }
 
-function SettingsDangerZone() {
+function SettingsExampleData() {
   return (
     <section>
       <SectionLabel>Example data</SectionLabel>

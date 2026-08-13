@@ -24,6 +24,8 @@ import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
+const SHOW_EXAMPLE_DATA = process.env.NODE_ENV === "development";
+
 function greeting(hour: number) {
   if (hour < 5) return "Late night";
   if (hour < 12) return "Good morning";
@@ -63,7 +65,7 @@ export default async function HomePage() {
       </header>
 
       {empty ? (
-        <EmptyKitchen />
+        <EmptyKitchen showExamples={SHOW_EXAMPLE_DATA} />
       ) : (
         <>
           <section className="mt-5 grid grid-cols-3 gap-2 px-4">
@@ -285,7 +287,7 @@ function StatTile({
   );
 }
 
-function EmptyKitchen() {
+function EmptyKitchen({ showExamples }: { showExamples: boolean }) {
   return (
     <div className="mt-8 px-4">
       <Card className="items-center gap-4 p-7 text-center">
@@ -295,8 +297,7 @@ function EmptyKitchen() {
         <div>
           <h2 className="text-lg font-semibold">Your kitchen is empty</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Scan a barcode to put your first item away, or fill it with a few
-            example groceries to have a look around.
+            Scan a barcode to put your first item away, or add one manually.
           </p>
         </div>
         <div className="flex w-full flex-col gap-2">
@@ -306,10 +307,12 @@ function EmptyKitchen() {
           <Button asChild variant="outline" size="lg" className="h-12 rounded-xl text-base">
             <Link href="/add">Add without scanning</Link>
           </Button>
-          <SampleDataButton>
-            <Sparkles className="size-4" aria-hidden />
-            Fill with examples
-          </SampleDataButton>
+          {showExamples && (
+            <SampleDataButton>
+              <Sparkles className="size-4" aria-hidden />
+              Fill with examples
+            </SampleDataButton>
+          )}
         </div>
       </Card>
     </div>
