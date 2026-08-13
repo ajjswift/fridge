@@ -116,7 +116,10 @@ async function lookupOpenFoodFacts(
       // Own-brand products list the brand as the name too; don't repeat it.
       brand: brand && brand.toLowerCase() !== name.toLowerCase() ? brand : null,
       imageUrl: product.image_front_small_url || product.image_small_url || null,
-      category: product.categories?.split(",")[0]?.trim() || null,
+      // Keep the full category trail. The first category is often a broad
+      // parent ("Plant-based foods and beverages"), while a useful matching
+      // category such as "Pastas" appears later in the same list.
+      category: product.categories?.trim() || null,
       quantity: product.quantity?.trim() || null,
     };
   } catch {
@@ -172,7 +175,7 @@ async function lookupUPCitemdb(code: string): Promise<ProviderResult> {
       name,
       brand: brand && brand.toLowerCase() !== name.toLowerCase() ? brand : null,
       imageUrl: item.images?.[0] || null,
-      category: item.category?.split(",")[0]?.trim() || null,
+      category: item.category?.trim() || null,
     };
   } catch {
     return { found: false, available: false };

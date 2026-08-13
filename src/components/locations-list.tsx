@@ -98,7 +98,7 @@ function SwipeableLocationRow({
 
       <Link
         href={`/locations/${location.id}`}
-        className="tap-scale relative z-10 flex items-center gap-3.5 bg-card p-4 active:bg-muted/50 md:translate-x-0"
+        className="relative z-10 flex items-center gap-3.5 bg-card p-4 md:translate-x-0"
         style={{ transform: offset ? `translateX(${offset}px)` : undefined }}
         onTouchStart={(event) => {
           const touch = event.touches[0];

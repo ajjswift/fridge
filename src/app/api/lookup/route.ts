@@ -43,6 +43,7 @@ export async function GET(request: Request) {
         name: known.name,
         brand: known.brand,
         imageUrl: known.image_url,
+        category: known.category,
         unit: known.unit,
         defaultLocationId: known.default_location_id,
         defaultDateType: known.default_date_type,
