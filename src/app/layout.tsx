@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { StandaloneViewport } from "@/components/standalone-viewport";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ThemeProvider>
           {children}
           <Toaster position="top-center" richColors closeButton={false} />
+          <StandaloneViewport />
         </ThemeProvider>
       </body>
     </html>
