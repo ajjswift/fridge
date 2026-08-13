@@ -239,9 +239,8 @@ const DEFAULT_SETTINGS: Array<[string, string]> = [
   ["notify_time", "08:30"],
 ];
 
-const SEED_USERNAME = process.env.RECIME_SEED_USERNAME ?? "alex";
-const SEED_PASSWORD =
-  process.env.RECIME_SEED_PASSWORD ?? "TMR6var-fpt9ftz-kje";
+const SEED_USERNAME = process.env.RECIME_SEED_USERNAME?.trim();
+const SEED_PASSWORD = process.env.RECIME_SEED_PASSWORD;
 
 /* ---------------------------------------------------------- migrations -- */
 
@@ -314,8 +313,8 @@ async function createAdapter(): Promise<DatabaseAdapter> {
 
 async function seedData(db: DatabaseAdapter) {
   // Locations
-  const locCount = await db.get<{ n: number }>("SELECT COUNT(*) AS n FROM locations");
-  if ((locCount?.n ?? 0) === 0) {
+  const locCount = await db.get<{ n: number | string }>("SELECT COUNT(*) AS n FROM locations");
+  if (Number(locCount?.n ?? 0) === 0) {
     for (let i = 0; i < DEFAULT_LOCATIONS.length; i++) {
       const [name, emoji, description, isFreezer] = DEFAULT_LOCATIONS[i];
       await db.run(
@@ -344,10 +343,15 @@ async function seedData(db: DatabaseAdapter) {
   }
 
   // Seed user
-  const userCount = await db.get<{ n: number }>("SELECT COUNT(*) AS n FROM users");
-  if ((userCount?.n ?? 0) === 0) {
+  const userCount = await db.get<{ n: number | string }>("SELECT COUNT(*) AS n FROM users");
+  if (Number(userCount?.n ?? 0) === 0) {
+    if (!SEED_USERNAME || !SEED_PASSWORD) {
+      throw new Error(
+        "RECIME_SEED_USERNAME and RECIME_SEED_PASSWORD must be set before the first run.",
+      );
+    }
     await db.run(
-      "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+      "INSERT INTO users (username, password_hash) VALUES (?, ?) ON CONFLICT DO NOTHING",
       SEED_USERNAME,
       hashPassword(SEED_PASSWORD),
     );

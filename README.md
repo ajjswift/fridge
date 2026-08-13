@@ -9,20 +9,18 @@ PostgreSQL instead. No hosted service or sync layer is required.
 
 ## Signing in
 
-The first account is created automatically the first time the app runs:
-
-| Username | Password |
-| --- | --- |
-| `alex` | `TMR6var-fpt9ftz-kje` |
+The first account is created automatically the first time the app runs. Before
+starting it, copy `.env.example` to `.env.local` and choose the username and
+password there.
 
 Change it under **Settings → People → Password**, and add accounts for everyone
 else from the same screen. Everyone has the same powers — there are no admins,
 it's a shared kitchen. Passwords are stored as scrypt hashes, sessions live in
 the database, and removing someone signs them out everywhere immediately.
 
-To seed a different first account, set `RECIME_SEED_USERNAME` and
-`RECIME_SEED_PASSWORD` **before the first run**. Once the database exists the
-seed never runs again, so deleting or renaming that account sticks.
+Set `RECIME_SEED_USERNAME` and `RECIME_SEED_PASSWORD` **before the first run**.
+Once the database exists the seed never runs again, so deleting or renaming that
+account sticks.
 
 ## What it does
 
@@ -170,8 +168,8 @@ layout.
 | --- | --- | --- |
 | `RECIME_DB_PATH` | `./data/recime.db` | Where the database file lives |
 | `DATABASE_URL` | unset | PostgreSQL connection string; when set, takes precedence over SQLite |
-| `RECIME_SEED_USERNAME` | `alex` | First account's username (first run only) |
-| `RECIME_SEED_PASSWORD` | see above | First account's password (first run only) |
+| `RECIME_SEED_USERNAME` | required | First account's username (first run only) |
+| `RECIME_SEED_PASSWORD` | required | First account's password (first run only) |
 | `RECIME_PUSH_CONTACT` | `mailto:nobody@example.com` | Contact address sent to push services |
 
 Everything else — the household name, the expiry warning window, light/dark —
