@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { scanFeedback, useBarcodeScanner } from "@/hooks/use-barcode-scanner";
 import { addStock } from "@/lib/actions";
-import { addDaysISO, formatQty, pluralUnit } from "@/lib/dates";
+import { formatQty, pluralUnit } from "@/lib/dates";
 import type { Location } from "@/lib/types";
 import { DEFAULT_UNIT } from "@/lib/types";
 import { cn } from "@/lib/utils";

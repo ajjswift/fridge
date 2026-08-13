@@ -10,7 +10,12 @@ import { registerServiceWorker } from "@/lib/push-client";
  */
 export function PushRegistrar() {
   useEffect(() => {
-    if (Notification?.permission !== "granted") return;
+    // `Notification` is not defined in several iPhone/iPad browser contexts.
+    // Referencing an undeclared browser global throws before optional chaining
+    // can help, which used to crash the authenticated layout after sign-in.
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") {
+      return;
+    }
     void registerServiceWorker();
   }, []);
 

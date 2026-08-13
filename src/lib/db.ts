@@ -292,13 +292,27 @@ async function createSqliteAdapter(): Promise<DatabaseAdapter> {
 }
 
 async function createPostgresAdapter(): Promise<DatabaseAdapter> {
-  const { Pool } = await import("pg");
+  const { Pool, types } = await import("pg");
   const { PostgresAdapter } = await import("./db-adapter");
 
+  // PostgreSQL returns COUNT() (int8) as a string by default. The UI and
+  // action guards rely on these values being numbers, just as they are under
+  // SQLite. Recime's counts can never approach Number's safe-integer limit.
+  types.setTypeParser(types.builtins.INT8, Number);
   const pool = new Pool({ connectionString: DATABASE_URL! });
+  pool.on("error", (error) => {
+    // Idle-client errors otherwise surface as an unhandled EventEmitter error
+    // and can take down the whole web process.
+    console.error("[recime] PostgreSQL pool error", error);
+  });
   const db = new PostgresAdapter(pool);
-  await db.exec(POSTGRES_SCHEMA);
-  return db;
+  try {
+    await db.exec(POSTGRES_SCHEMA);
+    return db;
+  } catch (error) {
+    await db.close();
+    throw error;
+  }
 }
 
 async function createAdapter(): Promise<DatabaseAdapter> {
@@ -306,9 +320,14 @@ async function createAdapter(): Promise<DatabaseAdapter> {
     ? await createPostgresAdapter()
     : await createSqliteAdapter();
 
-  await applyColumnMigrations(db);
-  await seedData(db);
-  return db;
+  try {
+    await applyColumnMigrations(db);
+    await seedData(db);
+    return db;
+  } catch (error) {
+    await db.close();
+    throw error;
+  }
 }
 
 async function seedData(db: DatabaseAdapter) {
@@ -368,22 +387,30 @@ async function seedData(db: DatabaseAdapter) {
 // Next's dev server re-evaluates modules on every hot reload; cache the handle
 // on globalThis so we don't leak file descriptors or pool connections.
 const globalForDb = globalThis as unknown as { __recimeDb?: DatabaseAdapter };
-
-// The adapter is async to construct, so we expose a Promise that resolves once.
-// Every consumer `await`s it before use.
-const dbPromise: Promise<DatabaseAdapter> =
-  globalForDb.__recimeDb
-    ? Promise.resolve(globalForDb.__recimeDb)
-    : createAdapter().then((adapter) => {
-        globalForDb.__recimeDb = adapter;
-        return adapter;
-      });
+let dbPromise: Promise<DatabaseAdapter> | undefined = globalForDb.__recimeDb
+  ? Promise.resolve(globalForDb.__recimeDb)
+  : undefined;
 
 /**
  * The single database handle. Awaiting this is essentially free after the
  * first call — it caches the resolved adapter on `globalThis`.
  */
 export function getDb(): Promise<DatabaseAdapter> {
+  if (!dbPromise) {
+    dbPromise = createAdapter()
+      .then((adapter) => {
+        globalForDb.__recimeDb = adapter;
+        return adapter;
+      })
+      .catch((error) => {
+        // A database that is temporarily unavailable at startup should recover
+        // on the next request rather than leaving this process permanently
+        // poisoned by one rejected initialization promise.
+        dbPromise = undefined;
+        console.error("[recime] database initialization failed", error);
+        throw error;
+      });
+  }
   return dbPromise;
 }
 
