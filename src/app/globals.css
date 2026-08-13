@@ -1,26 +1,221 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Freshness scale — used by badges, dots and progress rings. */
+  --color-fresh: var(--fresh);
+  --color-fresh-foreground: var(--fresh-foreground);
+  --color-fresh-muted: var(--fresh-muted);
+  --color-warn: var(--warn);
+  --color-warn-foreground: var(--warn-foreground);
+  --color-warn-muted: var(--warn-muted);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-muted: var(--danger-muted);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --radius: 0.9rem;
+
+  /* Warm paper, so photos of food and emoji sit comfortably on it. */
+  --background: oklch(0.981 0.008 95);
+  --foreground: oklch(0.215 0.018 145);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.215 0.018 145);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.215 0.018 145);
+
+  --primary: oklch(0.565 0.128 152);
+  --primary-foreground: oklch(0.99 0.01 150);
+  --secondary: oklch(0.955 0.012 120);
+  --secondary-foreground: oklch(0.3 0.03 150);
+  --muted: oklch(0.955 0.009 110);
+  --muted-foreground: oklch(0.53 0.02 140);
+  --accent: oklch(0.94 0.03 150);
+  --accent-foreground: oklch(0.33 0.06 152);
+  --destructive: oklch(0.585 0.208 26);
+
+  --border: oklch(0.9 0.012 120);
+  --input: oklch(0.9 0.012 120);
+  --ring: oklch(0.565 0.128 152);
+
+  --fresh: oklch(0.58 0.13 152);
+  --fresh-foreground: oklch(0.38 0.1 152);
+  --fresh-muted: oklch(0.94 0.045 152);
+  --warn: oklch(0.72 0.16 68);
+  --warn-foreground: oklch(0.47 0.13 55);
+  --warn-muted: oklch(0.955 0.055 80);
+  --danger: oklch(0.585 0.208 26);
+  --danger-foreground: oklch(0.48 0.18 26);
+  --danger-muted: oklch(0.955 0.035 25);
+}
+
+.dark {
+  --background: oklch(0.165 0.012 150);
+  --foreground: oklch(0.955 0.008 120);
+  --card: oklch(0.215 0.014 150);
+  --card-foreground: oklch(0.955 0.008 120);
+  --popover: oklch(0.225 0.014 150);
+  --popover-foreground: oklch(0.955 0.008 120);
+
+  --primary: oklch(0.72 0.15 152);
+  --primary-foreground: oklch(0.18 0.04 152);
+  --secondary: oklch(0.27 0.016 150);
+  --secondary-foreground: oklch(0.95 0.01 120);
+  --muted: oklch(0.26 0.014 150);
+  --muted-foreground: oklch(0.7 0.018 130);
+  --accent: oklch(0.3 0.035 152);
+  --accent-foreground: oklch(0.92 0.04 152);
+  --destructive: oklch(0.68 0.19 24);
+
+  --border: oklch(1 0 0 / 11%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.65 0.13 152);
+
+  --fresh: oklch(0.74 0.15 152);
+  --fresh-foreground: oklch(0.84 0.13 152);
+  --fresh-muted: oklch(0.3 0.055 152);
+  --warn: oklch(0.79 0.15 72);
+  --warn-foreground: oklch(0.88 0.11 80);
+  --warn-muted: oklch(0.3 0.042 70);
+  --danger: oklch(0.7 0.18 24);
+  --danger-foreground: oklch(0.84 0.12 24);
+  --danger-muted: oklch(0.3 0.052 24);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    /* Stops iOS bouncing the whole page behind the fixed nav bar. */
+    overscroll-behavior-y: none;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+
+  /* Chrome elements shouldn't be selectable — it feels like a website otherwise. */
+  button,
+  a,
+  [role="button"],
+  label {
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+
+  /* iOS zooms the viewport when a font-size under 16px gets focus. */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1rem);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  /* Momentum-scrolling horizontal rails that snap, like a native carousel. */
+  .snap-rail {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .snap-rail > * {
+    scroll-snap-align: start;
+  }
+  .tap-scale {
+    transition:
+      transform 140ms cubic-bezier(0.2, 0, 0, 1),
+      background-color 140ms ease;
+  }
+  .tap-scale:active {
+    transform: scale(0.97);
+  }
+}
+
+/* The scanner's sweeping laser line. */
+@keyframes scanline {
+  0% {
+    transform: translateY(-42%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(42%);
+    opacity: 0;
+  }
+}
+
+.animate-scanline {
+  animation: scanline 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite alternate;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-pop-in {
+  animation: pop-in 260ms cubic-bezier(0.2, 0, 0, 1) both;
 }

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+  <!-- Monochrome: Android tints the notification badge itself. -->
+  <path
+    d="M74 22C74 52 51 74 21 74C21 44 44 22 74 22Z"
+    fill="#ffffff"
+  />
+</svg>

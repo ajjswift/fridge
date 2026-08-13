@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# your kitchen's data — back this file up, don't commit it
+/data
+
+certificates
