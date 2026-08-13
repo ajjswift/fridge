@@ -34,8 +34,9 @@ account sticks.
   you've bought before go straight in with their usual place and shelf life
   (**Fast mode**); anything new is looked up in Open Food Facts so the name,
   brand and photo fill themselves in.
-- **Shopping list** — add things by hand, or let items with a minimum stock level
-  add themselves. Scanning something back in ticks it off the list.
+- **Shopping list** — add things by hand or from your saved catalogue, let items
+  with a minimum stock level add themselves, and use it even without signal.
+  Scanning something in removes its matching list item.
 - **Reminders** — one push notification a day listing what needs eating, on
   whichever phones you've turned it on for. It arrives even when the app is
   closed, and nothing is sent on days when there's nothing to say.
@@ -122,6 +123,7 @@ To try the app with realistic contents, use **Settings → Add example groceries
 | --- | --- |
 | Framework | Next.js 16 (App Router, React Server Components) |
 | Database | SQLite via `better-sqlite3`, or PostgreSQL via `pg` when `DATABASE_URL` is set |
+| Live shopping sync | SSE, with Redis Pub/Sub across app instances when `REDIS_URL` is set |
 | Writes | Server Actions in `src/lib/actions.ts`, validated with Zod |
 | Reads | Plain SQL in `src/lib/queries.ts`, server-only |
 | UI | Tailwind v4 + shadcn/ui, mobile-first |
@@ -168,6 +170,7 @@ layout.
 | --- | --- | --- |
 | `RECIME_DB_PATH` | `./data/recime.db` | Where the database file lives |
 | `DATABASE_URL` | unset | PostgreSQL connection string; when set, takes precedence over SQLite |
+| `REDIS_URL` | unset | Redis connection string for instant cross-instance shopping-list sync |
 | `RECIME_SEED_USERNAME` | required | First account's username (first run only) |
 | `RECIME_SEED_PASSWORD` | required | First account's password (first run only) |
 | `RECIME_PUSH_CONTACT` | `mailto:nobody@example.com` | Contact address sent to push services |

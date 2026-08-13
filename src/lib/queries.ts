@@ -175,6 +175,16 @@ export async function getAllProducts(): Promise<Product[]> {
   return db.all<Product>("SELECT * FROM products ORDER BY LOWER(name)");
 }
 
+export type ShoppingCatalogItem = Pick<Product, "id" | "name" | "brand" | "unit">;
+
+/** A compact local catalogue makes adding familiar items work without signal. */
+export async function getShoppingCatalog(): Promise<ShoppingCatalogItem[]> {
+  const db = await getDb();
+  return db.all<ShoppingCatalogItem>(
+    "SELECT id, name, brand, unit FROM products ORDER BY LOWER(name)",
+  );
+}
+
 export async function getLowStock(): Promise<Array<{
   id: number;
   name: string;

@@ -145,7 +145,7 @@ export function ScanResultSheet({
         toast.error(outcome.error);
         return;
       }
-      toast.success(`${outcome.data.productName} → ${location?.name}`, {
+      toast.success(`${outcome.data.productName} → ${location?.name}${outcome.data.removedShoppingItem ? ` · removed ${outcome.data.removedShoppingItem} from shopping` : ""}`, {
         duration: 1600,
       });
       onAdded({ name: outcome.data.productName, quantity, unit });

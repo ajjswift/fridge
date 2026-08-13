@@ -6,10 +6,12 @@ import { currentUser } from "./auth";
 import { getDb } from "./db";
 import type { DatabaseAdapter } from "./db-adapter";
 import { endOfMonthISO, todayISO } from "./dates";
+import { removeOneMatchedShoppingItem } from "./shopping-match";
+import { publishShoppingChange } from "./shopping-events";
 import type { DatePrecision, DateType, Location, Product } from "./types";
 import { DEFAULT_UNIT } from "./types";
 
-function refresh() { revalidatePath("/", "layout"); }
+function refresh() { revalidatePath("/", "layout"); publishShoppingChange(); }
 async function requireSignedIn(): Promise<{ ok: false; error: string } | null> {
   return (await currentUser()) ? null : { ok: false, error: "You've been signed out. Sign in again to make changes." };
 }
@@ -43,7 +45,7 @@ const AddStockInput = z.object({
 });
 export type AddStockValues = z.input<typeof AddStockInput>;
 
-export async function addStock(raw: AddStockValues): Promise<ActionResult<{ productId: number; productName: string }>> {
+export async function addStock(raw: AddStockValues): Promise<ActionResult<{ productId: number; productName: string; removedShoppingItem: string | null }>> {
   const denied = await requireSignedIn(); if (denied) return denied;
   const parsed = AddStockInput.safeParse(raw);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
@@ -83,8 +85,8 @@ export async function addStock(raw: AddStockValues): Promise<ActionResult<{ prod
       );
       const location = await db.get<{ name: string }>("SELECT name FROM locations WHERE id = ?", value.locationId);
       await logActivity(db, { kind: "add", productId: product.id, productName: product.name, locationName: location?.name, quantity: value.quantity, unit: value.unit });
-      await db.run("DELETE FROM shopping_items WHERE product_id = ? OR LOWER(name) = LOWER(?)", product.id, value.name);
-      return { productId: product.id, productName: product.name };
+      const removedShoppingItem = await removeOneMatchedShoppingItem(db, product);
+      return { productId: product.id, productName: product.name, removedShoppingItem };
     });
     refresh(); return { ok: true, data: result };
   } catch (error) { return { ok: false, error: messageFor(error) }; }
@@ -208,7 +210,7 @@ export async function updateLocation(raw: z.input<typeof LocationInput> & { id: 
 export async function deleteLocation(id: number): Promise<ActionResult> { const denied = await requireSignedIn(); if (denied) return denied; if (!Number.isInteger(id) || id < 1) return { ok: false, error: "Invalid place." }; try { const result = await (await getDb()).transaction(async (db) => { const removed = await db.run("DELETE FROM locations WHERE id = ? AND NOT EXISTS (SELECT 1 FROM stock_entries WHERE location_id = ?)", id, id); if (removed.changes > 0) return "removed" as const; return (await db.get<{ id: number }>("SELECT id FROM locations WHERE id = ?", id)) ? "not-empty" as const : "missing" as const; }); if (result === "not-empty") return { ok: false, error: "Empty this place first — it still has things in it." }; if (result === "missing") return { ok: false, error: "That place no longer exists." }; refresh(); return { ok: true, data: undefined }; } catch (error) { return { ok: false, error: messageFor(error) }; } }
 export async function reorderLocations(ids: number[]): Promise<ActionResult> { const denied = await requireSignedIn(); if (denied) return denied; try { await (await getDb()).transaction(async (db) => { for (const [index, id] of ids.entries()) await db.run("UPDATE locations SET sort_order = ? WHERE id = ?", index, id); }); refresh(); return { ok: true, data: undefined }; } catch (error) { return { ok: false, error: messageFor(error) }; } }
 
-export async function addShoppingItem(input: { name: string; quantity?: number; unit?: string | null; productId?: number | null }): Promise<ActionResult> { const denied = await requireSignedIn(); if (denied) return denied; const name = input.name.trim(); if (!name) return { ok: false, error: "Type something to add" }; try { await (await getDb()).run("INSERT INTO shopping_items (product_id, name, quantity, unit) VALUES (?, ?, ?, ?)", input.productId ?? null, name, input.quantity ?? 1, input.unit ?? null); refresh(); return { ok: true, data: undefined }; } catch (error) { return { ok: false, error: messageFor(error) }; } }
+export async function addShoppingItem(input: { name: string; quantity?: number; unit?: string | null; productId?: number | null }): Promise<ActionResult<{ id: number }>> { const denied = await requireSignedIn(); if (denied) return denied; const name = input.name.trim(); if (!name) return { ok: false, error: "Type something to add" }; try { const row = await (await getDb()).get<{ id: number }>("INSERT INTO shopping_items (product_id, name, quantity, unit) VALUES (?, ?, ?, ?) RETURNING id", input.productId ?? null, name, input.quantity ?? 1, input.unit ?? null); if (!row) throw new Error("Couldn't add that item."); refresh(); return { ok: true, data: { id: row.id } }; } catch (error) { return { ok: false, error: messageFor(error) }; } }
 export async function toggleShoppingItem(input: { id: number; checked: boolean }): Promise<ActionResult> { const denied = await requireSignedIn(); if (denied) return denied; try { await (await getDb()).run("UPDATE shopping_items SET checked = ? WHERE id = ?", input.checked ? 1 : 0, input.id); refresh(); return { ok: true, data: undefined }; } catch (error) { return { ok: false, error: messageFor(error) }; } }
 export async function deleteShoppingItem(id: number): Promise<ActionResult> { const denied = await requireSignedIn(); if (denied) return denied; try { await (await getDb()).run("DELETE FROM shopping_items WHERE id = ?", id); refresh(); return { ok: true, data: undefined }; } catch (error) { return { ok: false, error: messageFor(error) }; } }
 export async function clearCheckedShoppingItems(): Promise<ActionResult> { const denied = await requireSignedIn(); if (denied) return denied; try { await (await getDb()).run("DELETE FROM shopping_items WHERE checked = 1"); refresh(); return { ok: true, data: undefined }; } catch (error) { return { ok: false, error: messageFor(error) }; } }

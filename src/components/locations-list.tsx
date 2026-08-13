@@ -65,8 +65,9 @@ function SwipeableLocationRow({
   onRemove: () => void;
 }) {
   const [offset, setOffset] = useState(0);
-  const gesture = useRef({ startX: 0, startY: 0, offset: 0, dragging: false });
+  const gesture = useRef({ startX: 0, startY: 0, startOffset: 0, offset: 0, dragging: false });
   const empty = location.product_count === 0;
+  const revealed = offset < 0;
 
   function close() {
     gesture.current.offset = 0;
@@ -74,10 +75,13 @@ function SwipeableLocationRow({
   }
 
   return (
-    <div className={cn("relative overflow-hidden bg-destructive", bordered && "border-t")}>
+    <div className={cn("relative overflow-hidden bg-card", bordered && "border-t")}>
       <button
         type="button"
-        className="absolute inset-y-0 right-0 flex w-[6.5rem] items-center justify-center gap-1.5 bg-destructive text-sm font-semibold text-white md:hidden"
+        className={cn(
+          "absolute inset-y-0 right-0 flex w-[6.5rem] items-center justify-center gap-1.5 bg-destructive text-sm font-semibold text-white transition-opacity md:hidden",
+          revealed ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
         aria-label={empty ? `Remove ${location.name}` : `${location.name} must be empty before removal`}
         onClick={() => {
           close();
@@ -98,15 +102,15 @@ function SwipeableLocationRow({
         style={{ transform: offset ? `translateX(${offset}px)` : undefined }}
         onTouchStart={(event) => {
           const touch = event.touches[0];
-          gesture.current = { startX: touch.clientX, startY: touch.clientY, offset: 0, dragging: false };
+          gesture.current = { startX: touch.clientX, startY: touch.clientY, startOffset: offset, offset, dragging: false };
         }}
         onTouchMove={(event) => {
           const touch = event.touches[0];
           const horizontal = touch.clientX - gesture.current.startX;
           const vertical = touch.clientY - gesture.current.startY;
-          if (Math.abs(horizontal) <= Math.abs(vertical) || horizontal > 0) return;
+          if (Math.abs(horizontal) <= Math.abs(vertical)) return;
           gesture.current.dragging = true;
-          gesture.current.offset = Math.max(-REVEAL_WIDTH, horizontal);
+          gesture.current.offset = Math.max(-REVEAL_WIDTH, Math.min(0, gesture.current.startOffset + horizontal));
           setOffset(gesture.current.offset);
         }}
         onTouchEnd={() => setOffset(gesture.current.offset < -REVEAL_WIDTH / 2 ? -REVEAL_WIDTH : 0)}

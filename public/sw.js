@@ -1,7 +1,50 @@
-/* Fridge service worker — push notifications only, no offline caching. */
+/* Fridge service worker — push, plus a small offline shell for shopping trips. */
+
+const OFFLINE_CACHE = "fridge-offline-v1";
 
 self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+self.addEventListener("activate", (event) => event.waitUntil(
+  caches.keys().then((keys) => Promise.all(
+    keys
+      .filter((key) => key.startsWith("fridge-offline-") && key !== OFFLINE_CACHE)
+      .map((key) => caches.delete(key)),
+  )).then(() => self.clients.claim()),
+));
+
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+  const url = new URL(request.url);
+  if (request.method !== "GET" || url.origin !== self.location.origin) return;
+
+  // Save pages the user has actually opened. Online requests always win, so
+  // this is only served when signal disappears; it never makes online data stale.
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) event.waitUntil(
+            caches.open(OFFLINE_CACHE).then((cache) => cache.put(request, response.clone())),
+          );
+          return response;
+        })
+        .catch(async () => (await caches.match(request)) ?? (await caches.match("/")) ?? Response.error()),
+    );
+    return;
+  }
+
+  // Keep the versioned Next assets that make a cached page interactive. This
+  // is cache-first because their hash changes whenever their contents change.
+  if (url.pathname.startsWith("/_next/static/")) {
+    event.respondWith(
+      caches.match(request).then((cached) => cached ?? fetch(request).then((response) => {
+        if (response.ok) event.waitUntil(
+          caches.open(OFFLINE_CACHE).then((cache) => cache.put(request, response.clone())),
+        );
+        return response;
+      })),
+    );
+  }
+});
 
 self.addEventListener("push", (event) => {
   let payload = {};
