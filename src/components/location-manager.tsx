@@ -2,11 +2,12 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronUp, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Spinner } from "@/components/spinner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DeleteLocationDialog } from "@/components/delete-location-dialog";
 import {
   Drawer,
   DrawerContent,
@@ -20,7 +21,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
   createLocation,
-  deleteLocation,
   reorderLocations,
   updateLocation,
 } from "@/lib/actions";
@@ -148,6 +148,7 @@ function LocationDrawer({
   const [emoji, setEmoji] = useState(existing?.emoji ?? "📦");
   const [description, setDescription] = useState(existing?.description ?? "");
   const [isFreezer, setIsFreezer] = useState(Boolean(existing?.is_freezer));
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   function save() {
     startTransition(async () => {
@@ -247,27 +248,10 @@ function LocationDrawer({
           >
             {pending ? <Spinner /> : existing ? "Save" : "Add it"}
           </Button>
-          {existing && (
-            <Button
-              variant="ghost"
-              className="h-11 rounded-xl text-danger-foreground"
-              disabled={pending}
-              onClick={() =>
-                startTransition(async () => {
-                  const result = await deleteLocation(existing.id);
-                  if (!result.ok) { toast.error(result.error); return; }
-                  toast.success(`${existing.name} removed`);
-                  router.refresh();
-                  onClose();
-                })
-              }
-            >
-              <Trash2 className="size-4" aria-hidden />
-              Delete this place
-            </Button>
-          )}
+          {existing && <Button variant="ghost" className="h-11 rounded-xl text-danger-foreground" disabled={pending} onClick={() => setConfirmingDelete(true)}>Delete this place</Button>}
         </DrawerFooter>
       </DrawerContent>
+      {existing && <DeleteLocationDialog location={existing} open={confirmingDelete} onOpenChange={setConfirmingDelete} onDeleted={onClose} />}
     </Drawer>
   );
 }

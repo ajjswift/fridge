@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plus } from "lucide-react";
+import { LocationActions } from "@/components/location-actions";
 import { LocationStockList } from "@/components/location-stock-list";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -30,16 +31,7 @@ export default async function LocationPage({ params }: PageProps<"/locations/[id
             : `${lines.length} ${lines.length === 1 ? "thing" : "things"} inside`
         }
         backHref="/locations"
-        action={
-          <Button asChild variant="ghost" size="icon" className="rounded-full">
-            <Link
-              href={`/add?location=${location.id}`}
-              aria-label={`Add something to ${location.name}`}
-            >
-              <Plus className="size-5" />
-            </Link>
-          </Button>
-        }
+        action={<><Button asChild variant="ghost" size="icon" className="rounded-full md:hidden"><Link href={`/add?location=${location.id}`} aria-label={`Add something to ${location.name}`}><Plus className="size-5" /></Link></Button><LocationActions location={location} stockCount={lines.length} /></>}
       />
 
       <LocationStockList
