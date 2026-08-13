@@ -1,42 +1,22 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useActionState, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Spinner } from "@/components/spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn } from "@/lib/auth-actions";
+import { signIn, type SignInState } from "@/lib/auth-actions";
+
+const initialState: SignInState = { error: null };
 
 export function LoginForm({ next }: { next: string }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [state, formAction, pending] = useActionState(signIn, initialState);
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const username = String(formData.get("username") ?? "");
-    const password = String(formData.get("password") ?? "");
-    setError(null);
-    startTransition(async () => {
-      const result = await signIn({ username, password, next });
-      if (!result.ok) {
-        setError(result.error);
-        const passwordInput = form.elements.namedItem("password");
-        if (passwordInput instanceof HTMLInputElement) passwordInput.value = "";
-        return;
-      }
-      router.replace(result.data.redirectTo);
-      router.refresh();
-    });
-  }
 
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form action={formAction} className="space-y-4">
+      <input type="hidden" name="next" value={next} />
       <div>
         <Label htmlFor="username" className="mb-1.5 block">
           Username
@@ -83,12 +63,12 @@ export function LoginForm({ next }: { next: string }) {
         </div>
       </div>
 
-      {error && (
+      {state.error && (
         <p
           role="alert"
           className="rounded-xl bg-danger-muted px-3.5 py-2.5 text-sm font-medium text-danger-foreground"
         >
-          {error}
+          {state.error}
         </p>
       )}
 

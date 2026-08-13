@@ -23,14 +23,20 @@ import type { ActionResult } from "./actions";
 /** Same message whether the username or the password was wrong. */
 const BAD_CREDENTIALS = "That username and password don't match.";
 
-export async function signIn(input: {
-  username: string;
-  password: string;
-  next?: string;
-}): Promise<ActionResult<{ redirectTo: string }>> {
-  const username = input.username.trim();
-  if (!username || !input.password) {
-    return { ok: false, error: "Type your username and password." };
+export type SignInState = { error: string | null };
+
+/**
+ * Bound directly to the login form so it submits safely before React hydrates.
+ * In particular, a native GET form fallback must never put a password in a URL.
+ */
+export async function signIn(
+  _previousState: SignInState,
+  formData: FormData,
+): Promise<SignInState> {
+  const username = String(formData.get("username") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  if (!username || !password) {
+    return { error: "Type your username and password." };
   }
 
   const db = await getDb();
@@ -39,8 +45,8 @@ export async function signIn(input: {
     username,
   );
 
-  if (!row || !verifyPassword(input.password, row.password_hash)) {
-    return { ok: false, error: BAD_CREDENTIALS };
+  if (!row || !verifyPassword(password, row.password_hash)) {
+    return { error: BAD_CREDENTIALS };
   }
 
   const userAgent = (await headers()).get("user-agent");
@@ -55,13 +61,14 @@ export async function signIn(input: {
   });
 
   // Only ever send people to a path on this app, never an absolute URL.
+  const requestedNext = String(formData.get("next") ?? "");
   const next =
-    input.next && input.next.startsWith("/") && !input.next.startsWith("//")
-      ? input.next
+    requestedNext.startsWith("/") && !requestedNext.startsWith("//")
+      ? requestedNext
       : "/";
 
   revalidatePath("/", "layout");
-  return { ok: true, data: { redirectTo: next } };
+  redirect(next);
 }
 
 export async function signOut(): Promise<void> {
