@@ -8,13 +8,13 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Recime — your kitchen",
+  title: "Fridge — your kitchen",
   description: "See what's in your kitchen, what needs eating, and scan the shopping in.",
   manifest: "/manifest.webmanifest",
-  applicationName: "Recime",
+  applicationName: "Fridge",
   appleWebApp: {
     capable: true,
-    title: "Recime",
+    title: "Fridge",
     statusBarStyle: "default",
   },
 };

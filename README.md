@@ -1,4 +1,4 @@
-# Recime
+# Fridge
 
 A friendlier take on [grocy](https://grocy.info)'s stock tracking, built for one
 household and one job: knowing what's in the kitchen, what needs eating, and

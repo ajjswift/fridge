@@ -67,6 +67,12 @@ export function ScannerScreen({
         const response = await fetch(
           `/api/lookup?barcode=${encodeURIComponent(barcode)}`,
         );
+        if (!response.ok) {
+          const body = (await response.json().catch(() => null)) as {
+            error?: string;
+          } | null;
+          throw new Error(body?.error ?? "Couldn't look that barcode up.");
+        }
         const data = (await response.json()) as ScanResult;
 
         // Straight through only when the code itself carried a date. A remembered
@@ -111,8 +117,10 @@ export function ScannerScreen({
         }
 
         setResult(data);
-      } catch {
-        toast.error("Couldn't look that barcode up.");
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Couldn't look that barcode up.",
+        );
       } finally {
         setLooking(false);
       }

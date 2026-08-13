@@ -21,10 +21,10 @@ export function startDigestScheduler() {
       const { sendDailyDigestIfDue } = await import("./push");
       const result = await sendDailyDigestIfDue();
       if (result.status === "sent") {
-        console.log(`[recime] daily digest sent to ${result.sent} device(s)`);
+        console.log(`[fridge] daily digest sent to ${result.sent} device(s)`);
       }
     } catch (error) {
-      console.error("[recime] digest check failed", error);
+      console.error("[fridge] digest check failed", error);
     }
   };
 
@@ -36,5 +36,5 @@ export function startDigestScheduler() {
   // Catch up if the machine was asleep or the server was down at the due time.
   setTimeout(tick, 15_000).unref?.();
 
-  console.log("[recime] reminder scheduler running");
+  console.log("[fridge] reminder scheduler running");
 }

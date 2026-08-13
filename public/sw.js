@@ -1,4 +1,4 @@
-/* Recime service worker — push notifications only, no offline caching. */
+/* Fridge service worker — push notifications only, no offline caching. */
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
@@ -8,15 +8,15 @@ self.addEventListener("push", (event) => {
   try {
     payload = event.data ? event.data.json() : {};
   } catch {
-    payload = { title: "Recime", body: event.data ? event.data.text() : "" };
+    payload = { title: "Fridge", body: event.data ? event.data.text() : "" };
   }
 
-  const title = payload.title || "Recime";
+  const title = payload.title || "Fridge";
   const options = {
     body: payload.body || "",
     icon: "/icon.svg",
     badge: "/badge.svg",
-    tag: payload.tag || "recime",
+    tag: payload.tag || "fridge",
     renotify: Boolean(payload.tag),
     data: { url: payload.url || "/" },
     // A silent buzz is enough; this is a reminder, not an alarm.

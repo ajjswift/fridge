@@ -32,6 +32,8 @@ import { cn } from "@/lib/utils";
 export type ScanResult = {
   source: "known" | "openfoodfacts" | "unknown";
   barcode: string;
+  /** Every external barcode provider was unavailable, rather than missing this code. */
+  lookupUnavailable?: boolean;
   /** Present only when the scan was a GS1 code that carried a date. */
   scannedDate?: { iso: string; precision: DatePrecision; type: DateType } | null;
   product?: {
@@ -204,6 +206,11 @@ export function ScanResultSheet({
               )}
             </div>
           </div>
+          {result.lookupUnavailable && (
+            <p className="mt-3 rounded-xl bg-warn-muted px-3 py-2 text-sm text-warn-foreground">
+              Product lookup is temporarily unavailable. You can still add it manually.
+            </p>
+          )}
         </DrawerHeader>
 
         {showQuick ? (

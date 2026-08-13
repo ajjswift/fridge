@@ -104,7 +104,7 @@ export async function buildExpiryDigest(): Promise<PushPayload | null> {
   return {
     title: `🥗 ${headline}`,
     body: names.join(", ") + (extra > 0 ? ` and ${extra} more` : "") + ".",
-    tag: "recime-expiry-digest",
+    tag: "fridge-expiry-digest",
     url: "/expiring",
   };
 }

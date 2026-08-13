@@ -26,9 +26,9 @@ export async function sendTestNotification(): Promise<
   const digest = await buildExpiryDigest();
   const result = await sendPush(
     digest ?? {
-      title: "🥗 Recime reminders are on",
+      title: "🥗 Fridge reminders are on",
       body: "Nothing needs eating right now — this is what a reminder looks like.",
-      tag: "recime-test",
+      tag: "fridge-test",
       url: "/expiring",
     },
     user.id,

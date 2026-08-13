@@ -16,7 +16,7 @@ export async function GET() {
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
-    console.error("[recime] health check failed", error);
+    console.error("[fridge] health check failed", error);
     return NextResponse.json(
       { ok: false, error: "The database is unavailable." },
       { status: 503, headers: { "Cache-Control": "no-store" } },

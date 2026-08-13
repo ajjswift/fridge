@@ -53,7 +53,12 @@ export async function GET(request: Request) {
 
   const result = await lookupBarcode(barcode);
   if (!result.found) {
-    return NextResponse.json({ source: "unknown" as const, barcode, scannedDate });
+    return NextResponse.json({
+      source: "unknown" as const,
+      barcode,
+      scannedDate,
+      lookupUnavailable: result.unavailable ?? false,
+    });
   }
 
   return NextResponse.json({

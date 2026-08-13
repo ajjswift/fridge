@@ -238,7 +238,7 @@ function UnsupportedNote({ support }: { support: PushSupport }) {
   const content = {
     "needs-install": {
       icon: Share,
-      title: "Add Recime to your Home Screen first",
+      title: "Add Fridge to your Home Screen first",
       body: "On iPhone and iPad, reminders only work once the app is installed. Tap the Share button in Safari, then “Add to Home Screen”, and open it from there.",
     },
     insecure: {

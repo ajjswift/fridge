@@ -95,11 +95,22 @@ export async function consumeStock(input: { productId: number; locationId?: numb
   const wanted = Number(input.quantity); if (!Number.isFinite(wanted) || wanted <= 0) return { ok: false, error: "Quantity must be more than zero" };
   try {
     const removed = await (await getDb()).transaction(async (db) => {
-      const entries = await db.all<{ id: number; quantity: number }>(
-        `SELECT id, quantity FROM stock_entries WHERE product_id = ? AND quantity > 0
-          AND (? IS NULL OR location_id = ?) ORDER BY (expiry_date IS NULL), expiry_date, id`,
-        input.productId, input.locationId ?? null, input.locationId ?? null,
-      );
+      // PostgreSQL cannot infer a parameter's type from `$n IS NULL`. Use two
+      // explicit query shapes instead of passing an untyped null sentinel.
+      const entries = input.locationId == null
+        ? await db.all<{ id: number; quantity: number }>(
+            `SELECT id, quantity FROM stock_entries
+              WHERE product_id = ? AND quantity > 0
+              ORDER BY (expiry_date IS NULL), expiry_date, id`,
+            input.productId,
+          )
+        : await db.all<{ id: number; quantity: number }>(
+            `SELECT id, quantity FROM stock_entries
+              WHERE product_id = ? AND location_id = ? AND quantity > 0
+              ORDER BY (expiry_date IS NULL), expiry_date, id`,
+            input.productId,
+            input.locationId,
+          );
       let left = wanted;
       for (const entry of entries) {
         if (left <= 0) break;

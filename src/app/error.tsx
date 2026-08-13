@@ -10,14 +10,14 @@ export default function AppError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[recime] route render failed", error);
+    console.error("[fridge] route render failed", error);
   }, [error]);
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center bg-background px-6 text-foreground">
       <div className="rounded-3xl border bg-card p-6 shadow-sm">
         <div className="mb-4 text-4xl" aria-hidden>⚠️</div>
-        <h1 className="text-xl font-semibold tracking-tight">Recime couldn&apos;t open that screen</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Fridge couldn&apos;t open that screen</h1>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           This is usually temporary. Check your connection, then try again.
         </p>

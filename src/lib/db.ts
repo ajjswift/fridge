@@ -4,7 +4,7 @@ import { hashPassword } from "./password";
 import type { DatabaseAdapter } from "./db-adapter";
 
 /**
- * When `DATABASE_URL` is set (e.g. `postgres://user:pass@host/recime`), the
+ * When `DATABASE_URL` is set (e.g. `postgres://user:pass@host/fridge`), the
  * app connects to PostgreSQL. Otherwise it falls back to a local SQLite file
  * in `./data/recime.db` — zero config for the single-machine case.
  */
@@ -297,13 +297,13 @@ async function createPostgresAdapter(): Promise<DatabaseAdapter> {
 
   // PostgreSQL returns COUNT() (int8) as a string by default. The UI and
   // action guards rely on these values being numbers, just as they are under
-  // SQLite. Recime's counts can never approach Number's safe-integer limit.
+  // SQLite. Fridge's counts can never approach Number's safe-integer limit.
   types.setTypeParser(types.builtins.INT8, Number);
   const pool = new Pool({ connectionString: DATABASE_URL! });
   pool.on("error", (error) => {
     // Idle-client errors otherwise surface as an unhandled EventEmitter error
     // and can take down the whole web process.
-    console.error("[recime] PostgreSQL pool error", error);
+    console.error("[fridge] PostgreSQL pool error", error);
   });
   const db = new PostgresAdapter(pool);
   try {
@@ -407,7 +407,7 @@ export function getDb(): Promise<DatabaseAdapter> {
         // on the next request rather than leaving this process permanently
         // poisoned by one rejected initialization promise.
         dbPromise = undefined;
-        console.error("[recime] database initialization failed", error);
+        console.error("[fridge] database initialization failed", error);
         throw error;
       });
   }
