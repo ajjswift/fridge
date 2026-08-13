@@ -8,7 +8,6 @@ import { createClient } from "redis";
  * leaves a device permanently stale.
  */
 type Listener = () => void;
-type RedisClient = ReturnType<typeof createClient>;
 const SHOPPING_CHANNEL = "fridge:shopping:changed";
 const REDIS_URL = process.env.REDIS_URL?.trim() || null;
 
@@ -18,9 +17,8 @@ const registry = globalThis as typeof globalThis & {
 };
 
 type RedisBridge = {
-  publisher: RedisClient;
-  subscriber: RedisClient;
   ready: Promise<boolean>;
+  publish: () => Promise<void>;
 };
 
 function listeners() {
@@ -47,8 +45,6 @@ function redisBridge(): RedisBridge | null {
   subscriber.on("error", reportRedisError);
 
   const bridge: RedisBridge = {
-    publisher,
-    subscriber,
     ready: Promise.all([publisher.connect(), subscriber.connect()])
       .then(async () => {
         await subscriber.subscribe(SHOPPING_CHANNEL, () => notifyLocalListeners());
@@ -58,6 +54,9 @@ function redisBridge(): RedisBridge | null {
         reportRedisError(error instanceof Error ? error : new Error(String(error)));
         return false;
       }),
+    publish: async () => {
+      await publisher.publish(SHOPPING_CHANNEL, "1");
+    },
   };
   registry.__fridgeShoppingRedis = bridge;
   return bridge;
@@ -83,7 +82,7 @@ export function publishShoppingChange() {
     if (!ready) return;
     try {
       // Every other instance receives this through its dedicated subscriber.
-      await bridge.publisher.publish(SHOPPING_CHANNEL, "1");
+      await bridge.publish();
     } catch (error) {
       reportRedisError(error instanceof Error ? error : new Error(String(error)));
     }
