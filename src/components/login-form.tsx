@@ -12,19 +12,22 @@ import { signIn } from "@/lib/auth-actions";
 export function LoginForm({ next }: { next: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function submit(event: React.FormEvent) {
+  function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const username = String(formData.get("username") ?? "");
+    const password = String(formData.get("password") ?? "");
     setError(null);
     startTransition(async () => {
       const result = await signIn({ username, password, next });
       if (!result.ok) {
         setError(result.error);
-        setPassword("");
+        const passwordInput = form.elements.namedItem("password");
+        if (passwordInput instanceof HTMLInputElement) passwordInput.value = "";
         return;
       }
       router.replace(result.data.redirectTo);
@@ -41,8 +44,6 @@ export function LoginForm({ next }: { next: string }) {
         <Input
           id="username"
           name="username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
           autoComplete="username"
           autoCapitalize="none"
           autoCorrect="off"
@@ -62,8 +63,6 @@ export function LoginForm({ next }: { next: string }) {
             id="password"
             name="password"
             type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
             enterKeyHint="go"
             required
@@ -97,7 +96,7 @@ export function LoginForm({ next }: { next: string }) {
         type="submit"
         size="lg"
         className="h-13 w-full rounded-2xl text-base"
-        disabled={pending || !username || !password}
+        disabled={pending}
       >
         {pending ? <Spinner /> : "Sign in"}
       </Button>
